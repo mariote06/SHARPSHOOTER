@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4c5a32">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zeragem">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Zeragem RapidStrike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: single-column range card — settings strip, paper target you tap, correction readout, history */
+:root{
+  --bg:#eceee6; --card:#f8f8f3; --ink:#1f241c; --muted:#5f6657; --line:#c9cdbf;
+  --grid:#d7dacd; --grid-major:#b5baa8; --accent:#e2571b; --accent-ink:#fff;
+  --olive:#4c5a32; --ok:#2f7a3b;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151812; --card:#1e221a; --ink:#e7eadf; --muted:#9aa190; --line:#343a2d;
+  --grid:#2a2f24; --grid-major:#454c3b; --accent:#f06a2e; --accent-ink:#140b05;
+  --olive:#a9bd7c; --ok:#6cc27a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151812; --card:#1e221a; --ink:#e7eadf; --muted:#9aa190; --line:#343a2d;
+  --grid:#2a2f24; --grid-major:#454c3b; --accent:#f06a2e; --accent-ink:#140b05;
+  --olive:#a9bd7c; --ok:#6cc27a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 32px}
+.wrap{max-width:520px;margin:0 auto;display:grid;gap:14px}
+header{display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.badge{font-family:var(--f-num);font-size:12px;color:var(--olive);border:1px solid var(--line);padding:4px 8px;border-radius:4px;white-space:nowrap}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:12px;min-width:0}
+.label{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--muted)}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+input,select{font:500 16px var(--f-num);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 8px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:600 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase;padding:9px 6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.target-wrap{position:relative;touch-action:manipulation}
+svg#target{width:100%;height:auto;display:block;border-radius:6px;background:var(--card);cursor:crosshair;user-select:none;-webkit-user-select:none}
+.hint{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{font:600 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:10px 14px;cursor:pointer;flex:1;min-width:90px}
+button.b.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.b:disabled{opacity:.45;cursor:default}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.turret{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:2px;background:var(--bg)}
+.turret .t{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--muted)}
+.turret .n{font-family:var(--f-num);font-weight:700;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
+.turret .d{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase}
+.turret .m{font-family:var(--f-num);font-size:12px;color:var(--muted)}
+.turret.zero .d{color:var(--ok)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.stats b{font-family:var(--f-num);color:var(--ink);font-weight:500}
+.status{font-size:14px;padding:10px 12px;border-radius:6px;border:1px dashed var(--line)}
+.status.good{border-color:var(--ok);color:var(--ok)}
+ol.hist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ol.hist li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13px;border-top:1px solid var(--line);padding-top:6px}
+ol.hist .k{font-family:var(--f-num);color:var(--muted)}
+ol.hist .v{font-family:var(--f-num);min-width:0}
+.empty{font-size:13px;color:var(--muted)}
+details summary{cursor:pointer;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--muted)}
+details p{font-size:13px;color:var(--muted);margin:8px 0 0}
+.manual{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (prefers-reduced-motion:no-preference){.shot{transition:r .15s}}
+</style>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Zeragem 100 m</h1>
+      <div class="sub">Firefield RapidStrike 1-10x24 · Ruger American Gen 2 .308 Win</div>
+    </div>
+    <span class="badge" id="badge">1 clique = 1,45 cm</span>
+  </header>
+
+  <section class="panel" aria-label="Configuração">
+    <div class="row">
+      <div class="field"><label for="dist">Distância (m)</label><input id="dist" type="number" inputmode="decimal" min="10" max="1000" step="5" value="100"></div>
+      <div class="field"><label for="click">Valor do clique</label>
+        <select id="click">
+          <option value="moa0.5" selected>½ MOA</option>
+          <option value="moa0.25">¼ MOA</option>
+          <option value="mil0.1">0,1 MIL</option>
+        </select></div>
+      <div class="field"><label for="range">Alvo (±cm)</label>
+        <select id="range"><option>10</option><option selected>20</option><option>40</option></select></div>
+    </div>
+    <div class="seg" role="group" aria-label="Modo de entrada">
+      <button type="button" id="mTap" aria-pressed="true">Marcar no alvo</button>
+      <button type="button" id="mMan" aria-pressed="false">Medir à mão</button>
+    </div>
+  </section>
+
+  <section class="panel" id="tapPanel" aria-label="Alvo">
+    <div class="label">Toca nos impactos do grupo</div>
+    <div class="target-wrap"><svg id="target" viewBox="-20 -20 40 40" role="img" aria-label="Alvo com grelha em centímetros"></svg></div>
+    <div class="hint"><span>Centro = ponto visado</span><span id="gridInfo">Grelha 1 cm · linhas fortes 5 cm</span></div>
+    <div class="btns">
+      <button class="b" id="undo" type="button">Desfazer</button>
+      <button class="b" id="clear" type="button">Limpar</button>
+    </div>
+  </section>
+
+  <section class="panel" id="manPanel" aria-label="Medição manual" hidden>
+    <div class="label">Centro do grupo em relação ao ponto visado</div>
+    <div class="manual">
+      <div class="field"><label for="mv">Vertical (cm)</label>
+        <select id="mvDir"><option value="-1">Abaixo</option><option value="1">Acima</option></select>
+        <input id="mv" type="number" inputmode="decimal" min="0" step="0.5" value="8"></div>
+      <div class="field"><label for="mh">Horizontal (cm)</label>
+        <select id="mhDir"><option value="-1">Esquerda</option><option value="1">Direita</option></select>
+        <input id="mh" type="number" inputmode="decimal" min="0" step="0.5" value="5"></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Correção" aria-live="polite">
+    <div class="label">Correção a aplicar nas torres</div>
+    <div class="readout">
+      <div class="turret" id="tEl"><span class="t">Elevação</span><span class="n" id="elN">0</span><span class="d" id="elD">—</span><span class="m" id="elM"></span></div>
+      <div class="turret" id="tWi"><span class="t">Deriva</span><span class="n" id="wiN">0</span><span class="d" id="wiD">—</span><span class="m" id="wiM"></span></div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="status" id="status">Marca pelo menos um impacto.</div>
+    <div class="btns"><button class="b primary" id="apply" type="button">Correção feita · novo grupo</button></div>
+  </section>
+
+  <section class="panel" aria-label="Histórico">
+    <div class="label">Histórico de grupos</div>
+    <ol class="hist" id="hist"></ol>
+    <div class="btns"><button class="b" id="clearHist" type="button">Apagar histórico</button></div>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>Como usar</summary>
+      <p>1. Dispara um grupo de 3 tiros a 10x, de mesa, sempre ao mesmo ponto visado.</p>
+      <p>2. Marca os impactos no alvo da app tal como estão no papel (o centro é o ponto visado; usa a grelha em cm). Ou mede o centro do grupo à mão.</p>
+      <p>3. Roda as torres o número de cliques indicado, no sentido mostrado (UP / DOWN, R / L, conforme as setas da tua torre).</p>
+      <p>4. Carrega em "Correção feita", deixa o cano arrefecer e repete até o grupo ficar centrado. No fim, reposiciona a escala das torres no 0.</p>
+    </details>
+  </section>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = $("target");
+  let shots = [];             // {x,y} in cm, y up positive
+  let mode = "tap";
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem("zeragem_hist")||"[]"); } catch(e){ hist=[]; }
+  try {
+    const s = JSON.parse(localStorage.getItem("zeragem_cfg")||"null");
+    if (s){ $("dist").value=s.dist; $("click").value=s.click; $("range").value=s.range; }
+  } catch(e){}
+
+
+  const fmt = (n,d=1) => n.toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+  function cmPerClick(){
+    const d = Math.max(1, parseFloat($("dist").value)||100);
+    const v = $("click").value;
+    if (v==="mil0.1") return 0.1*10*d/100;          // 1 mil = 10 cm @100 m
+    const moa = 2.90888*d/100;
+    return (v==="moa0.5"?0.5:0.25)*moa;
+  }
+  function unitInfo(){
+    const d = Math.max(1, parseFloat($("dist").value)||100);
+    const v = $("click").value;
+    return v==="mil0.1" ? {name:"MIL", cm:10*d/100} : {name:"MOA", cm:2.90888*d/100};
+  }
+
+  function drawTarget(){
+    const R = parseInt($("range").value,10);
+    svg.setAttribute("viewBox", `${-R} ${-R} ${2*R} ${2*R}`);
+    svg.innerHTML = "";
+    const step = R>20 ? 2 : 1, major = R>20 ? 10 : 5;
+    $("gridInfo").textContent = `Grelha ${step} cm · linhas fortes ${major} cm`;
+    const sw = R/200;
+    const g = document.createElementNS(NS,"g");
+    for (let v=-R; v<=R; v+=step){
+      const isMaj = v % major === 0;
+      for (const [x1,y1,x2,y2] of [[v,-R,v,R],[-R,v,R,v]]){
+        const l = document.createElementNS(NS,"line");
+        l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);
+        l.setAttribute("stroke", isMaj ? "var(--grid-major)" : "var(--grid)");
+        l.setAttribute("stroke-width", isMaj ? sw*2 : sw);
+        g.appendChild(l);
+      }
+    }
+    svg.appendChild(g);
+    // axis labels (cm)
+    for (let v=-R+major; v<R; v+=major){
+      if (v===0) continue;
+      const t = document.createElementNS(NS,"text");
+      t.setAttribute("x", v); t.setAttribute("y", R - R*0.03);
+      t.setAttribute("font-size", R*0.045); t.setAttribute("text-anchor","middle");
+      t.setAttribute("fill","var(--muted)"); t.setAttribute("font-family","JetBrains Mono, monospace");
+      t.textContent = v; svg.appendChild(t);
+    }
+    // aim point: diamond
+    const aim = document.createElementNS(NS,"g");
+    const s = R*0.06;
+    aim.innerHTML = `<path d="M0 ${-s} L${s} 0 L0 ${s} L${-s} 0Z" fill="none" stroke="var(--olive)" stroke-width="${sw*3}"/>
+      <line x1="${-R}" y1="0" x2="${R}" y2="0" stroke="var(--olive)" stroke-width="${sw*1.5}" stroke-dasharray="${R*0.02} ${R*0.02}" opacity=".6"/>
+      <line x1="0" y1="${-R}" x2="0" y2="${R}" stroke="var(--olive)" stroke-width="${sw*1.5}" stroke-dasharray="${R*0.02} ${R*0.02}" opacity=".6"/>`;
+    svg.appendChild(aim);
+    // shots
+    const r = Math.max(0.5, R*0.028);
+    shots.forEach((p,i)=>{
+      const c = document.createElementNS(NS,"circle");
+      c.setAttribute("cx",p.x); c.setAttribute("cy",-p.y); c.setAttribute("r",r);
+      c.setAttribute("fill","var(--ink)"); c.setAttribute("class","shot");
+      svg.appendChild(c);
+      const t = document.createElementNS(NS,"text");
+      t.setAttribute("x",p.x); t.setAttribute("y",-p.y + r*0.38); t.setAttribute("font-size",r*1.1);
+      t.setAttribute("text-anchor","middle"); t.setAttribute("fill","var(--card)");
+      t.setAttribute("font-family","JetBrains Mono, monospace"); t.textContent=i+1;
+      svg.appendChild(t);
+    });
+    if (shots.length){
+      const c = centroid();
+      const cross = document.createElementNS(NS,"g");
+      const k = R*0.05;
+      cross.innerHTML = `<line x1="${c.x-k}" y1="${-c.y}" x2="${c.x+k}" y2="${-c.y}" stroke="var(--accent)" stroke-width="${sw*4}"/>
+        <line x1="${c.x}" y1="${-c.y-k}" x2="${c.x}" y2="${-c.y+k}" stroke="var(--accent)" stroke-width="${sw*4}"/>
+        <line x1="${c.x}" y1="${-c.y}" x2="0" y2="0" stroke="var(--accent)" stroke-width="${sw*2}" stroke-dasharray="${R*0.015} ${R*0.015}"/>`;
+      svg.appendChild(cross);
+    }
+  }
+
+  function centroid(){
+    const n = shots.length;
+    return {x: shots.reduce((a,p)=>a+p.x,0)/n, y: shots.reduce((a,p)=>a+p.y,0)/n};
+  }
+  function spread(){
+    let m=0;
+    for (let i=0;i<shots.length;i++) for (let j=i+1;j<shots.length;j++){
+      m = Math.max(m, Math.hypot(shots[i].x-shots[j].x, shots[i].y-shots[j].y));
+    }
+    return m;
+  }
+
+  function currentOffset(){
+    if (mode==="man"){
+      const v = (parseFloat($("mv").value)||0) * parseInt($("mvDir").value,10);
+      const h = (parseFloat($("mh").value)||0) * parseInt($("mhDir").value,10);
+      return {x:h, y:v, n:null};
+    }
+    if (!shots.length) return null;
+    const c = centroid();
+    return {x:c.x, y:c.y, n:shots.length};
+  }
+
+  let last = null;
+  function compute(){
+    const cpc = cmPerClick(), u = unitInfo();
+    $("badge").textContent = `1 clique = ${fmt(cpc,2)} cm`;
+    const off = currentOffset();
+    last = null;
+    if (!off){
+      ["elN","wiN"].forEach(id=>$(id).textContent="0");
+      $("elD").textContent=$("wiD").textContent="—"; $("elM").textContent=$("wiM").textContent="";
+      $("stats").innerHTML=""; $("status").className="status";
+      $("status").textContent="Marca pelo menos um impacto."; $("apply").disabled=true; return;
+    }
+    const elC = Math.round(-off.y / cpc);   // + = UP
+    const wiC = Math.round(-off.x / cpc);   // + = R
+    $("elN").textContent = Math.abs(elC);
+    $("wiN").textContent = Math.abs(wiC);
+    $("elD").textContent = elC===0 ? "OK" : (elC>0 ? "↑ UP (subir)" : "↓ DOWN (baixar)");
+    $("wiD").textContent = wiC===0 ? "OK" : (wiC>0 ? "→ R (direita)" : "← L (esquerda)");
+    $("tEl").classList.toggle("zero", elC===0);
+    $("tWi").classList.toggle("zero", wiC===0);
+    $("elM").textContent = `${fmt(Math.abs(off.y))} cm ${off.y<0?"baixo":"alto"} · ${fmt(Math.abs(off.y)/u.cm,2)} ${u.name}`;
+    $("wiM").textContent = `${fmt(Math.abs(off.x))} cm ${off.x<0?"esq.":"dir."} · ${fmt(Math.abs(off.x)/u.cm,2)} ${u.name}`;
+    let st = `<span>Distância ao centro <b>${fmt(Math.hypot(off.x,off.y))} cm</b></span>`;
+    if (off.n){
+      st += `<span>Tiros <b>${off.n}</b></span>`;
+      if (off.n>1){ const s=spread(); st += `<span>Agrupamento <b>${fmt(s)} cm · ${fmt(s/(2.90888*(parseFloat($("dist").value)||100)/100),2)} MOA</b></span>`; }
+    }
+    $("stats").innerHTML = st;
+    const done = elC===0 && wiC===0;
+    $("status").className = "status" + (done ? " good" : "");
+    $("status").textContent = done
+      ? "Zero feito: o centro do grupo está dentro de meio clique do ponto visado. Faz um grupo de confirmação e repõe a escala das torres no 0."
+      : (off.n===1 ? "Só um impacto marcado. Para corrigir com segurança usa um grupo de 3 tiros." : `Roda ${Math.abs(elC)} cliques na elevação e ${Math.abs(wiC)} na deriva, depois dispara novo grupo.`);
+    $("apply").disabled = false;
+    last = {elC, wiC, off, n:off.n, d:$("dist").value, click:$("click").selectedOptions[0].textContent};
+  }
+
+  function renderHist(){
+    const ol = $("hist"); ol.innerHTML="";
+    if (!hist.length){ ol.innerHTML = `<li class="empty" style="border:0;grid-template-columns:1fr">Ainda sem grupos registados. Cada correção aplicada fica aqui.</li>`; return; }
+    hist.slice().reverse().forEach((h,i)=>{
+      const li = document.createElement("li");
+      const el = h.elC===0?"elev. OK":`${Math.abs(h.elC)} ${h.elC>0?"UP":"DOWN"}`;
+      const wi = h.wiC===0?"der. OK":`${Math.abs(h.wiC)} ${h.wiC>0?"R":"L"}`;
+      li.innerHTML = `<span class="k">#${hist.length-i} ${h.t}</span><span class="v">${el} · ${wi} <span style="color:var(--muted)">(${h.d} m, ${h.click}${h.n?`, ${h.n} tiros`:""})</span></span>`;
+      ol.appendChild(li);
+    });
+  }
+  function saveCfg(){
+    try{ localStorage.setItem("zeragem_cfg", JSON.stringify({dist:$("dist").value, click:$("click").value, range:$("range").value})); }catch(e){}
+  }
+  function saveHist(){ try{ localStorage.setItem("zeragem_hist", JSON.stringify(hist)); }catch(e){} }
+
+  function update(){ drawTarget(); compute(); }
+
+  svg.addEventListener("click", e=>{
+    const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const m = svg.getScreenCTM(); if (!m) return;
+    const p = pt.matrixTransform(m.inverse());
+    shots.push({x: Math.round(p.x*10)/10, y: Math.round(-p.y*10)/10});
+    update();
+  });
+  $("undo").onclick = ()=>{ shots.pop(); update(); };
+  $("clear").onclick = ()=>{ shots=[]; update(); };
+  ["dist","click","range"].forEach(id=>$(id).addEventListener("input",()=>{saveCfg(); update();}));
+  ["mv","mh","mvDir","mhDir"].forEach(id=>$(id).addEventListener("input",compute));
+
+  function setMode(m){
+    mode=m;
+    $("mTap").setAttribute("aria-pressed", m==="tap");
+    $("mMan").setAttribute("aria-pressed", m==="man");
+    $("tapPanel").hidden = m!=="tap";
+    $("manPanel").hidden = m!=="man";
+    compute();
+  }
+  $("mTap").onclick=()=>setMode("tap");
+  $("mMan").onclick=()=>setMode("man");
+
+  $("apply").onclick = ()=>{
+    if (!last) return;
+    const now = new Date();
+    hist.push({elC:last.elC, wiC:last.wiC, n:last.n, d:last.d, click:last.click,
+      t: now.toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit"})+" "+now.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})});
+    saveHist(); renderHist();
+    shots=[]; update();
+    $("status").textContent = "Correção registada. Dispara o próximo grupo e marca os impactos.";
+  };
+  let confirmArm = false;
+  $("clearHist").onclick = ()=>{
+    if (!confirmArm){ confirmArm=true; $("clearHist").textContent="Toca de novo para apagar"; setTimeout(()=>{confirmArm=false;$("clearHist").textContent="Apagar histórico";},3000); return; }
+    hist=[]; saveHist(); renderHist(); confirmArm=false; $("clearHist").textContent="Apagar histórico";
+  };
+
+  renderHist(); update();
+})();
+</script>
+</body>
+</html>

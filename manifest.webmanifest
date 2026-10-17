@@ -1,0 +1,17 @@
+{
+  "name": "Zeragem RapidStrike",
+  "short_name": "Zeragem",
+  "description": "Zerar a mira a 100 m: marca os impactos e recebe os cliques a dar nas torres.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eceee6",
+  "theme_color": "#4c5a32",
+  "lang": "pt-PT",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
